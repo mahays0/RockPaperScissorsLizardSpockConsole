@@ -76,7 +76,6 @@ public class Server {
 			// next round: start 10 second timer
 			
 			for(int i=0; i<nPlayers; i++){
-				players[i].nextRound(scores);
 				players[i].getMove();
 			}
 			Thread.sleep(20000);
@@ -105,7 +104,10 @@ public class Server {
 			int activeCount=nPlayers;
 			for(int i=0; i<nPlayers; i++){
 				PlayerThread player=players[i];
+				// send moves
 				player.displayMoves(moves);
+				// send updated scores
+				player.nextRound(scores);
 				if(scores[i]<maxScore){
 					// loser
 					player.active=false;
