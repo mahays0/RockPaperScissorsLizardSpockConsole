@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.List;
 import java.util.Scanner;
 
 import com.example.util.Message;
@@ -25,17 +23,26 @@ public class Client implements Runnable {
 	protected boolean won=false;
 	protected boolean okToMove=false;
 	private boolean dropped; 
-	public Client(int port, String ip, String playerName) throws UnknownHostException, IOException{
-		socket = new Socket(ip,port);
-		out=new ObjectOutputStream(socket.getOutputStream());
-		out.flush();
-		in=new ObjectInputStream(socket.getInputStream());
+	private int port;
+	private String ip;
+	public Client(int port, String ip, String playerName){
+		this.port=port;
+		this.ip=ip;
 		this.playerName=playerName;
 	}
 	/**
 	 * Contains the main game logic. Call from a new Thread so the app's UI doesn't lock up!
 	 */
 	public void run(){
+		try{
+			socket = new Socket(ip,port);
+			out=new ObjectOutputStream(socket.getOutputStream());
+			out.flush();
+			in=new ObjectInputStream(socket.getInputStream());
+		}catch(Exception e){
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
 		try{
 		while(true){
 			Message m = (Message) in.readObject();
@@ -44,6 +51,9 @@ public class Client implements Runnable {
 			if("getPlayerName".equals(m.command)){
 				cmd="setPlayerName";
 				margs=new Object[]{playerName};
+			}else if("displayMoves".equals(m.command)){
+				// display moves players made
+				displayPlayerMoves((String[])m.args);
 			}else if("setPlayers".equals(m.command)){
 				// get player names
 				playerNames=(String[])m.args;
@@ -72,7 +82,7 @@ public class Client implements Runnable {
 		}
 		}catch(Exception e){
 			e.printStackTrace();
-			System.exit(1);
+			// let client exit gracefully
 		}
 		
 	}
@@ -83,6 +93,12 @@ public class Client implements Runnable {
 	protected void displayWinner(Integer winner) {
 		// TODO: call JS function in WebView to update h1 tag with winner
 		System.out.println(playerNames[winner]+" won!");
+	}
+	protected void displayPlayerMoves(String[] moves) {
+		// TODO: call JS function in WebView to display each player's moves
+		for(int i=0; i<moves.length; i++){
+			System.out.println(playerNames[i]+" "+moves[i]);	
+		}
 	}
 	/**
 	 * Function that JS should call to notify the server that the player has set their move.
@@ -126,7 +142,7 @@ public class Client implements Runnable {
 		int port=Integer.valueOf(args[1]);
 		String ip=args[2];
 		Client c = null;
-		try{
+
 			c = new Client(port,ip,playerName);
 			// to avoid locking up the app, you should run the main game loop in a Thread, like so:
 			Thread t = new Thread(c);
@@ -155,13 +171,7 @@ public class Client implements Runnable {
 				String move = moves[in.nextInt()-1];
 				c.sendMove(move);
 			}
-		}catch(UnknownHostException e){
-			System.err.println("Never heard of that host...");
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
 	}
 	private void setPlayerName(String playerName) throws IOException {
 		Message m = new Message("setPlayerName",new String[]{playerName});

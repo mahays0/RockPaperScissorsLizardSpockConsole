@@ -109,5 +109,14 @@ public class PlayerThread{
 		// TODO Auto-generated method stub
 		executor.shutdownNow();
 	}
+	public void displayMoves(String[] moves) {
+		// TODO Auto-generated method stub
+		Message displayMoves=new Message("displayMoves",moves);
+		try{
+			sendMessage(displayMoves);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
 
 }

@@ -81,9 +81,11 @@ public class Server {
 			}
 			Thread.sleep(20000);
 			// get moves and figure out points
+			String[] moves=new String[nPlayers];
 			int maxScore=0;
 			int maxScorePlayer=0;
 			for(int i=0; i<nPlayers; i++){
+				moves[i]=players[i].lastMove;
 				if(!players[i].active){
 					continue;
 				}
@@ -98,11 +100,12 @@ public class Server {
 					maxScorePlayer=i;
 				}
 			}
-			// drop losers
+			// send moves and drop losers
 			System.err.println("Dropping losers");
 			int activeCount=nPlayers;
 			for(int i=0; i<nPlayers; i++){
 				PlayerThread player=players[i];
+				player.displayMoves(moves);
 				if(scores[i]<maxScore){
 					// loser
 					player.active=false;
@@ -119,6 +122,8 @@ public class Server {
 					players[i].win(maxScorePlayer);
 					players[i].stop();
 				}
+				// wait for devices to receive msgs?
+				Thread.sleep(5000);
 				return;
 			}
 		}
